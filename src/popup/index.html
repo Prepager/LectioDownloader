@@ -18,7 +18,6 @@
 			}
 
 			.holder {
-				height: 56px;
 				width: 225px;
 				padding: 10px;
 			}
@@ -59,8 +58,27 @@
 				vertical-align: middle;
 				text-align: center;
 				font-size: 16px;
-				margin-top: 10px;
-				margin-bottom: 10px;
+				border-radius: 4px;
+				background-color: rgba(0, 0, 0, 0.1);
+			}
+
+			.input {
+				text-align: center;
+				margin-top: 5px;
+			}
+
+			.input input {
+				border-radius: 4px;
+				border: 1px solid rgba(0, 0, 0, 0.1);
+				text-align: center;
+			}
+
+			hr {
+				margin-left: -10px;
+				margin-right: -10px;
+				height: 10px;
+				border: 0;
+				box-shadow: 0 10px 10px -10px #8c8b8b inset;
 			}
 
 			.clearfix:after {
@@ -79,6 +97,8 @@
 	</head>
 	<body>
 		<div class="holder">
+
+			<!-- Group -->
 			<div class="btn-group">
 				<button type="button" class="btn" id="opgaver">
 					Opgaver
@@ -88,9 +108,21 @@
 				</button>
 			</div>
 			<div class="clearfix"></div>
+
+			<!-- Amount -->
+			<div class="input">
+				<input type="number" class="amount" id="amount" min="5" max="500" value="150"> <label for="amount">Filer pr download.</label>
+			</div>
+			<div class="clearfix"></div>
+
+			<!-- Divider -->
+			<hr/>
+
+			<!-- Status -->
 			<div class="status">
 				Venter...
 			</div>
+
 		</div>
 		<script type="text/javascript" src="actions.js"></script>
 	</body>

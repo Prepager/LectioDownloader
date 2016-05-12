@@ -10,8 +10,7 @@ chrome.tabs.getSelected(function(tabs) {
 // Submit
 var submitResponse = function() {
 	// Message
-	console.log(tab.id);
-	chrome.tabs.sendMessage(tab.id, {action: this.id});
+	chrome.tabs.sendMessage(tab.id, {action: this.id, amount: document.getElementById('amount').value});
 }
 
 // Loop
@@ -23,6 +22,5 @@ for (var i = 0; i < buttons.length; i++) {
 chrome.extension.onMessage.addListener(
 	function(request, sender, sendResponse) {
 		document.getElementsByClassName('status')[0].innerHTML = request.text;
-		console.log(request.text);
 	}
 );

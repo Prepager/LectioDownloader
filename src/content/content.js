@@ -4,21 +4,19 @@ chrome.extension.onMessage.addListener(
 
 		// Variables
 		var action = request.action;
+		var amount = request.amount;
 
 		// Action
 		if(action == "opgaver") {
-			downloadOpgaver();
+			downloadOpgaver(amount);
 		}else{
-			downloadDokumenter();
+			downloadDokumenter(amount);
 		}
 	}
 );
 
 // Opgaver
-function downloadOpgaver() {
-	// Debug
-	console.log('downloadOpgaver');
-
+function downloadOpgaver(amount) {
 	// URL
 	var URL = /^https:\/\/www.lectio.dk\/[^\?]*OpgaverElev.aspx*/;
 	if(!URL.test($(location).attr('href')))
@@ -29,10 +27,7 @@ function downloadOpgaver() {
 }
 
 // Dokumenter
-function downloadDokumenter() {
-	// Debug
-	console.log('downloadDokumenter');
-
+function downloadDokumenter(amount) {
 	// URL
 	var currentURL = $(location).attr('href');
 	var URL = /^https:\/\/www.lectio.dk\/[^\?]*DokumentOversigt.aspx*/;
@@ -88,7 +83,7 @@ function downloadDokumenter() {
 
 			// Check
 			if(div.attr('id') == "s_m_Content_Content_FolderTreeView")
-			{$
+			{
 				// Stop
 				active = false;
 				break;
@@ -127,7 +122,7 @@ function downloadDokumenter() {
 	});
 
 	// Message
-	chrome.extension.sendMessage({text: 'Indlæser filer (0/'+links.length+')'});
+	chrome.extension.sendMessage({text: 'Indlæser mapper (0/'+links.length+')'});
 
 	// Links
 	var ajaxDone = 0;
@@ -140,9 +135,12 @@ function downloadDokumenter() {
 			url: value,
 			type: "get",
 			success: function(data) {
+				// Debug
+				if(downloads.length >= 100) { return false; }
+
 				// Message
 				ajaxDone++;
-				chrome.extension.sendMessage({text: 'Indlæser filer ('+ajaxDone+'/'+links.length+')'});
+				chrome.extension.sendMessage({text: 'Indlæser mapper ('+ajaxDone+'/'+links.length+')'});
 
 				// Variables
 				var _holder = $(data).find('td.documentFolderContent');
@@ -164,26 +162,41 @@ function downloadDokumenter() {
 				});
 			}
 		});
-		//return false;
 	});
 
 	// Ajax
+	var stepCount = 0;
 	$(document).ajaxStop(function() {
+		// Variables
+		stepCount = Math.ceil(downloads.length/amount);
+
 		// Message
 		chrome.extension.sendMessage({text: 'Downloader filer (0/'+downloads.length+')'});
 
 		// Setup
-		var zip = new JSZip();
+		var zip = [];
 
 		// Downloads
 		var downloadsDone = 0;
+		var arrayDone = 0;
+		var zipDone = 0;
 		$.each(downloads, function(index, value) {
 			// Variables
 			var _folder = value[0];
 			var _file = value[1];
 			var _link = value[2];
+			arrayDone++;
+
+			// Setup
+			var _done = arrayDone;
+			var _step = Math.floor(arrayDone/amount);
+			if(zip[_step] == null)
+			{
+				zip[_step] = new JSZip();
+			}
 
 			// Content
+			var _zip = zip[_step];
 			JSZipUtils.getBinaryContent(_link, function (err, data) {
 				// Error
 				if(err) {
@@ -195,25 +208,38 @@ function downloadDokumenter() {
 				chrome.extension.sendMessage({text: 'Downloader filer ('+downloadsDone+'/'+downloads.length+')'});
 
 				// Add
-				zip.file(_folder+'/'+_file, data, {
+				_zip.file(_folder+'/'+_file, data, {
 					binary: true
 				});
 
 				// Done
 				if(downloadsDone == downloads.length)
 				{
-					// Message
-					chrome.extension.sendMessage({text: 'Genererer ZIP'});
-
-					// Save
-					zip.generateAsync({
-						type: 'blob'
-					}).then(function(content) {
+					// Loop
+					$.each(zip, function(index, value) {
 						// Message
-						chrome.extension.sendMessage({text: 'Downloader ZIP'});
+						chrome.extension.sendMessage({text: 'Genererer ZIP (0/'+zip.length+')'});
 
 						// Save
-						saveAs(content, "lectio-dokumenter.zip");
+						value.generateAsync({
+							type: 'blob'
+						}).then(function(content) {
+							// Done
+							zipDone++;
+
+							// Message
+							chrome.extension.sendMessage({text: 'Genererer ZIP ('+zipDone+'/'+zip.length+')'});
+							//chrome.extension.sendMessage({text: 'Downloader ZIP'});
+
+							// Save
+							saveAs(content, 'lectio-dokumenter-step'+index+'.zip');
+
+							// Done
+							if(zipDone == zip.length)
+							{
+								chrome.extension.sendMessage({text: 'Download færdig...'});
+							}
+						});
 					});
 				}
 			});
