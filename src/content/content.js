@@ -154,6 +154,9 @@ function downloadDokumenter(amount) {
 					var _name = _download.text();
 					_download = _download.attr('href');
 
+					// Debug
+					if(downloads.length >= 150) { return false; }
+
 					// Save
 					downloads.push([val[0], $.trim(_name), ('https://www.lectio.dk'+_download).toString()]);
 				});
@@ -241,16 +244,18 @@ function downloadZIP(zip, current, max)
 		chrome.extension.sendMessage({text: 'Downloader ZIP ('+current+'/'+max+')'});
 
 		// Save
-		saveAs(content, 'lectio-dokumenter-step'+current+'.zip');
+		var filesaver = saveAs(content, 'lectio-dokumenter-step'+current+'.zip');
 
 		// Done
-		if(current == max)
-		{
-			// Message
-			chrome.extension.sendMessage({text: 'Download færdig...'});
-		}else{
-			// Restart
-			downloadZIP(zip, current+1, max)
+		filesaver.onwriteend = function() {
+			if(current == max)
+			{
+				// Message
+				chrome.extension.sendMessage({text: 'Download færdig...'});
+			}else{
+				// Restart
+				downloadZIP(zip, current+1, max)
+			}
 		}
 	});
 }
