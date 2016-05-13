@@ -135,9 +135,6 @@ function downloadDokumenter(amount) {
 			url: value,
 			type: "get",
 			success: function(data) {
-				// Debug
-				if(downloads.length >= 100) { return false; }
-
 				// Message
 				ajaxDone++;
 				chrome.extension.sendMessage({text: 'Indlæser mapper ('+ajaxDone+'/'+links.length+')'});
@@ -216,49 +213,44 @@ function downloadDokumenter(amount) {
 				if(downloadsDone == downloads.length)
 				{
 					// Loop
-					$.each(zip, function(index, value) {
-						// Message
-						chrome.extension.sendMessage({text: 'Genererer ZIP (0/'+zip.length+')'});
-
-						// Save
-						value.generateAsync({
-							type: 'blob'
-						}).then(function(content) {
-							// Done
-							zipDone++;
-
-							// Message
-							chrome.extension.sendMessage({text: 'Genererer ZIP ('+zipDone+'/'+zip.length+')'});
-							//chrome.extension.sendMessage({text: 'Downloader ZIP'});
-
-							// Save
-							saveAs(content, 'lectio-dokumenter-step'+index+'.zip');
-
-							// Done
-							if(zipDone == zip.length)
-							{
-								chrome.extension.sendMessage({text: 'Download færdig...'});
-							}
-						});
-					});
+					downloadZIP(zip, 0, zip.length);
 				}
 			});
 		});
 	});
 }
 
+// Download
+function downloadZIP(zip, current, max)
+{
+	// Check
+	if(zip[current] == null) { return false; }
+	value = zip[current];
 
+	// Message
+	chrome.extension.sendMessage({text: 'Genererer ZIP 0% ('+current+'/'+max+')'});
 
+	// Save
+	value.generateAsync({
+		type: 'blob'
+	}, function(data) {
+		// Message
+		chrome.extension.sendMessage({text: 'Genererer ZIP '+Math.round(data.percent)+'% ('+current+'/'+max+')'});
+	}).then(function(content) {
+		// Message
+		chrome.extension.sendMessage({text: 'Downloader ZIP ('+current+'/'+max+')'});
 
+		// Save
+		saveAs(content, 'lectio-dokumenter-step'+current+'.zip');
 
-
-
-
-
-
-
-
-
-
-
-
+		// Done
+		if(current == max)
+		{
+			// Message
+			chrome.extension.sendMessage({text: 'Download færdig...'});
+		}else{
+			// Restart
+			downloadZIP(zip, current+1, max)
+		}
+	});
+}
