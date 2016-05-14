@@ -155,7 +155,7 @@ function downloadDokumenter(amount) {
 					_download = _download.attr('href');
 
 					// Debug
-					if(downloads.length >= 150) { return false; }
+					//if(downloads.length >= 150) { return false; }
 
 					// Save
 					downloads.push([val[0], $.trim(_name), ('https://www.lectio.dk'+_download).toString()]);
